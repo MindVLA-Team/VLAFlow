@@ -1,0 +1,12 @@
+VLAFlow
+Copyright 2026 Li Auto Inc.
+
+This product includes software and materials developed at Li Auto Inc.
+
+VLAFlow: A Unified Training Framework for Vision-Language-Action Models
+via Co-training and Future Latent Alignment.
+Project page: https://github.com/MindVLA-Team/VLAFlow
+
+Licensed under the Apache License, Version 2.0 (the "License").
+You may obtain a copy of the License at:
+    http://www.apache.org/licenses/LICENSE-2.0

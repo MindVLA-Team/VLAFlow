@@ -1,0 +1,77 @@
+# ---- macOS ----
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+downloads/
+*.egg
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# ---- Virtual environments ----
+.venv/
+venv/
+env/
+ENV/
+.conda/
+*.conda
+
+# ---- Jupyter / IPython ----
+.ipynb_checkpoints/
+profile_default/
+ipython_config.py
+
+# ---- Editors / IDEs ----
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ---- Environment / secrets ----
+.env
+.env.*
+*.local
+
+# ---- ML / experiment artifacts ----
+wandb/
+runs/
+logs/
+outputs/
+checkpoints/
+*.ckpt
+*.pt
+*.pth
+*.safetensors
+*.bin
+
+# ---- LaTeX build artifacts (if the report source is ever added here) ----
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.lof
+*.lot
+*.nav
+*.snm
+*.vrb
+CLAUDE.md
+# NOTE: tracked artifacts that must NOT be ignored — keep them in the repo:
+#   report/*.pdf  (the technical report)
+#   assets/*.png  (README figures)
+# The rules above never match those paths; do not add a blanket "*.pdf" ignore.
