@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>document.documentElement.classList.add('js');</script>
+<title>VLAFlow — A Unified Training Framework for Vision-Language-Action Models</title>
+<meta name="description" content="VLAFlow: a unified flow-matching framework for a controlled comparison of VLA pre-training paradigms — action-only (MindPI), language co-training (MindLPI), future-latent alignment (MindWPI), and their combination (MindLWPI).">
+<meta name="author" content="Guoyang Xia, Fengfa Li, Hongjin Ji, Lei Ren, Fangxiang Feng, Kun Zhan, Yan Xie">
+
+<!-- Open Graph / Twitter -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="VLAFlow: Benchmarking VLA Pre-training Paradigms">
+<meta property="og:description" content="A unified flow-matching framework comparing action-only, language-supervised, and future-latent VLA training paradigms on ~5,000h of robot data.">
+<meta property="og:url" content="https://mindvla-team.github.io/VLAFlow/">
+<meta property="og:image" content="https://mindvla-team.github.io/VLAFlow/assets/framework_overview.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="VLAFlow: Benchmarking VLA Pre-training Paradigms">
+<meta name="twitter:description" content="A unified flow-matching framework comparing VLA training paradigms on ~5,000h of robot data.">
+<meta name="twitter:image" content="https://mindvla-team.github.io/VLAFlow/assets/framework_overview.png">
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230B5D43'/%3E%3Cpath d='M24 30 L50 74 L76 30' fill='none' stroke='white' stroke-width='11' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --green-900:#0B5D43; --green-800:#0A6B4A; --green-600:#12805c; --green-400:#3aa17e;
+    --soft:#DCEBE5; --mist:#F3F5F4; --ink:#16241f; --muted:#5c6f68; --line:#e2e8e5;
+    --card:#ffffff; --shadow:0 10px 30px rgba(11,93,67,.08); --shadow-lg:0 22px 50px rgba(11,93,67,.16);
+    --radius:16px; --maxw:1080px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink); background:var(--mist); line-height:1.65; -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--green-800); text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px}
+  section{scroll-margin-top:78px; padding:64px 0}
+  h2{font-size:clamp(1.5rem,3vw,2.05rem); font-weight:800; letter-spacing:-.02em; margin:.1em 0 .1em}
+  .kicker{color:var(--green-800); font-weight:700; font-size:.82rem; letter-spacing:.14em; text-transform:uppercase}
+  .lead{color:var(--muted); font-size:1.05rem; max-width:70ch}
+
+  /* NAV */
+  nav{position:sticky; top:0; z-index:50; background:rgba(255,255,255,.82); backdrop-filter:saturate(1.4) blur(10px);
+      border-bottom:1px solid var(--line)}
+  .nav-in{max-width:var(--maxw); margin:0 auto; padding:11px 22px; display:flex; align-items:center; gap:18px}
+  .brand{font-weight:800; letter-spacing:-.02em; color:var(--green-900); font-size:1.12rem; display:flex; align-items:center; gap:9px}
+  .brand .dot{width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,var(--green-900),var(--green-400));display:inline-block}
+  .nav-links{margin-left:auto; display:flex; gap:6px; overflow-x:auto; scrollbar-width:none}
+  .nav-links::-webkit-scrollbar{display:none}
+  .nav-links a{color:var(--muted); font-weight:600; font-size:.9rem; padding:7px 11px; border-radius:9px; white-space:nowrap; transition:.2s}
+  .nav-links a:hover{color:var(--green-900); background:var(--soft); text-decoration:none}
+  .nav-links a.active{color:var(--green-900); background:var(--soft)}
+
+  /* HERO */
+  header.hero{position:relative; overflow:hidden; color:#fff; text-align:center;
+    background:linear-gradient(125deg,#093f2e,#0B5D43 40%,#0A6B4A 68%,#12805c);
+    background-size:200% 200%; animation:grad 16s ease infinite}
+  @keyframes grad{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+  header.hero::before{content:""; position:absolute; inset:0;
+    background:radial-gradient(60% 55% at 18% 12%,rgba(255,255,255,.16),transparent 60%),
+               radial-gradient(50% 50% at 85% 8%,rgba(58,161,126,.35),transparent 60%); pointer-events:none}
+  .hero-in{position:relative; max-width:900px; margin:0 auto; padding:66px 22px 118px}
+  .eyebrow{display:inline-block; font-size:.78rem; letter-spacing:.16em; text-transform:uppercase; font-weight:700;
+    background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.25); padding:6px 13px; border-radius:999px; margin-bottom:20px}
+  .hero h1{font-size:clamp(2.7rem,7vw,4.4rem); font-weight:800; letter-spacing:-.03em; margin:0 0 .12em; line-height:1}
+  .hero .subtitle{font-size:clamp(1.02rem,2.2vw,1.28rem); font-weight:500; color:rgba(255,255,255,.92); max-width:44ch; margin:.4em auto 1.4em}
+  .authors{font-size:1.02rem; font-weight:500; color:#fff; max-width:60ch; margin:0 auto .5em}
+  .authors sup{font-weight:400; opacity:.85}
+  .affil{font-size:.86rem; color:rgba(255,255,255,.8); max-width:64ch; margin:0 auto .3em}
+  .notes{font-size:.78rem; color:rgba(255,255,255,.66); margin:.2em auto 0}
+  .btns{display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin-top:30px}
+  .btn{display:inline-flex; align-items:center; gap:9px; font-weight:600; font-size:.96rem; padding:12px 20px;
+    border-radius:999px; transition:transform .18s, box-shadow .18s, background .18s; border:1.5px solid transparent}
+  .btn:hover{text-decoration:none; transform:translateY(-2px)}
+  .btn-primary{background:#fff; color:var(--green-900); box-shadow:0 8px 22px rgba(0,0,0,.18)}
+  .btn-primary:hover{box-shadow:0 12px 30px rgba(0,0,0,.26)}
+  .btn-ghost{background:rgba(255,255,255,.07); color:#fff; border-color:rgba(255,255,255,.45)}
+  .btn-ghost:hover{background:rgba(255,255,255,.16)}
+  .btn svg{width:18px;height:18px}
+
+  /* FLOATING FIGURE CARD */
+  .teaser{margin-top:-86px}
+  .fig-card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow-lg);
+    padding:16px; }
+  .fig-card img{width:100%; display:block; border-radius:9px; cursor:zoom-in}
+  .cap{color:var(--muted); font-size:.86rem; margin-top:12px; text-align:center}
+  .cap b{color:var(--ink)}
+
+  /* GENERIC FIGURE */
+  figure{margin:26px 0 0}
+  figure img{width:100%; display:block; border-radius:12px; border:1px solid var(--line); box-shadow:var(--shadow); cursor:zoom-in; background:#fff}
+  figure figcaption{color:var(--muted); font-size:.85rem; margin-top:11px; text-align:center}
+
+  /* CALLOUT */
+  .callout{background:var(--soft); border-left:4px solid var(--green-800); border-radius:12px; padding:18px 20px; margin-top:22px}
+  .callout p{margin:.2em 0}
+  .abstract{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:26px 28px}
+
+  /* CARDS GRID */
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px; margin-top:26px}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:22px; box-shadow:var(--shadow); transition:transform .2s, box-shadow .2s}
+  .card:hover{transform:translateY(-4px); box-shadow:var(--shadow-lg)}
+  .card .num{width:34px;height:34px;border-radius:10px;background:var(--soft);color:var(--green-900);font-weight:800;
+    display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+  .card h3{margin:0 0 .35em; font-size:1.06rem; font-weight:700}
+  .card p{margin:0; color:var(--muted); font-size:.93rem}
+
+  .cols{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:26px}
+  .panel{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:20px 22px; box-shadow:var(--shadow)}
+  .panel h3{margin:.1em 0 .5em; font-size:1.02rem; color:var(--green-900)}
+  .panel ul{margin:0; padding-left:18px} .panel li{margin:.3em 0; font-size:.94rem}
+  code.inl{font-family:'JetBrains Mono',ui-monospace,monospace; background:var(--soft); color:var(--green-900); padding:1px 6px; border-radius:6px; font-size:.85em}
+
+  /* TABLES */
+  .table-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); margin-top:22px; background:#fff}
+  table{border-collapse:collapse; width:100%; font-size:.9rem; min-width:640px}
+  thead th{background:var(--green-900); color:#fff; font-weight:600; text-align:center; padding:12px 12px; position:sticky; top:0}
+  thead th:first-child{text-align:left}
+  tbody td{padding:10px 12px; text-align:center; border-top:1px solid var(--line)}
+  tbody td:first-child{text-align:left; font-weight:600; white-space:nowrap}
+  tbody tr:nth-child(even){background:#fafcfb}
+  tbody tr:hover{background:var(--soft)}
+  td.best{color:var(--green-900); font-weight:800; background:rgba(58,161,126,.14)}
+  tr.ours td{background:rgba(11,93,67,.06)}
+  tr.ours:hover td{background:var(--soft)}
+  tr.ours td:first-child{color:var(--green-900)}
+  .grp td{background:#eef4f1 !important; font-weight:700; color:var(--muted); text-align:left; font-size:.8rem; letter-spacing:.04em; text-transform:uppercase}
+
+  /* TABS */
+  .tabs{display:flex; gap:8px; margin-top:24px; flex-wrap:wrap}
+  .tab{font-weight:600; font-size:.9rem; padding:9px 16px; border-radius:999px; border:1.5px solid var(--line);
+    background:#fff; color:var(--muted); cursor:pointer; transition:.2s}
+  .tab:hover{border-color:var(--green-400); color:var(--green-900)}
+  .tab.active{background:var(--green-900); color:#fff; border-color:var(--green-900)}
+  .tab-panel{display:none} .tab-panel.active{display:block}
+
+  /* BIBTEX */
+  .code-box{position:relative; background:#0d2a20; color:#dcece5; border-radius:var(--radius); padding:20px 20px; box-shadow:var(--shadow); margin-top:22px; overflow:auto}
+  .code-box pre{margin:0; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:.84rem; line-height:1.6; white-space:pre}
+  .copy{position:absolute; top:12px; right:12px; background:rgba(255,255,255,.1); color:#fff; border:1px solid rgba(255,255,255,.25);
+    font-weight:600; font-size:.8rem; padding:6px 12px; border-radius:8px; cursor:pointer; transition:.2s}
+  .copy:hover{background:rgba(255,255,255,.2)}
+  .copy.done{background:#3aa17e; border-color:#3aa17e}
+
+  /* REVEAL */
+  .js .reveal{opacity:0; transform:translateY(20px); transition:opacity .7s ease, transform .7s ease}
+  .js .reveal.is-visible{opacity:1; transform:none}
+  @media (prefers-reduced-motion:reduce){.js .reveal{opacity:1;transform:none;transition:none} header.hero{animation:none}}
+
+  /* FOOTER */
+  footer{background:#08281e; color:rgba(255,255,255,.82); padding:44px 0 40px; margin-top:40px}
+  footer a{color:#8fd3ba}
+  .foot-links{display:flex; gap:18px; flex-wrap:wrap; margin:14px 0}
+  .foot-links a{font-weight:600}
+  .foot-small{font-size:.83rem; color:rgba(255,255,255,.55); margin-top:12px}
+
+  /* LIGHTBOX */
+  .lightbox{position:fixed; inset:0; z-index:100; background:rgba(6,20,15,.9); display:none; align-items:center; justify-content:center; padding:30px; cursor:zoom-out}
+  .lightbox.open{display:flex}
+  .lightbox img{max-width:96%; max-height:92%; border-radius:10px; box-shadow:0 30px 80px rgba(0,0,0,.5)}
+  .lightbox .x{position:absolute; top:20px; right:26px; color:#fff; font-size:2rem; font-weight:300; cursor:pointer; line-height:1}
+
+  /* BACK TO TOP */
+  #top{position:fixed; bottom:22px; right:22px; z-index:60; width:44px; height:44px; border-radius:50%;
+    background:var(--green-900); color:#fff; border:none; cursor:pointer; box-shadow:var(--shadow-lg);
+    opacity:0; pointer-events:none; transition:opacity .3s, transform .2s; font-size:1.1rem}
+  #top.show{opacity:1; pointer-events:auto} #top:hover{transform:translateY(-3px)}
+
+  @media(max-width:720px){
+    .cols{grid-template-columns:1fr}
+    section{padding:48px 0}
+    .brand span.full{display:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-in">
+    <a href="#top-hero" class="brand"><span class="dot"></span>VLAFlow</a>
+    <div class="nav-links">
+      <a href="#abstract">Abstract</a>
+      <a href="#highlights">Highlights</a>
+      <a href="#paradigms">Paradigms</a>
+      <a href="#method">Framework</a>
+      <a href="#data">Data</a>
+      <a href="#results">Results</a>
+      <a href="#insight">Insight</a>
+      <a href="#bibtex">BibTeX</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero" id="top-hero">
+  <div class="hero-in">
+    <span class="eyebrow">Technical Report · 2026</span>
+    <h1>VLAFlow</h1>
+    <p class="subtitle">A Unified Training Framework for Vision-Language-Action Models via Co-training and Future Latent Alignment</p>
+    <p class="authors">
+      Guoyang Xia<sup>1,2,*</sup>&nbsp; Fengfa Li<sup>1,*</sup>&nbsp; Hongjin Ji<sup>1,3</sup>&nbsp;
+      Lei Ren<sup>1,†,‡</sup>&nbsp; Fangxiang Feng<sup>2,‡</sup>&nbsp; Kun Zhan<sup>1</sup>&nbsp; Yan Xie<sup>1</sup>
+    </p>
+    <p class="affil"><sup>1</sup>Li Auto Inc.&nbsp;&nbsp; <sup>2</sup>School of Artificial Intelligence, Beijing University of Posts and Telecommunications&nbsp;&nbsp; <sup>3</sup>The Chinese University of Hong Kong, Shenzhen</p>
+    <p class="notes"><sup>*</sup>Equal contribution&nbsp;&nbsp; <sup>†</sup>Project leader&nbsp;&nbsp; <sup>‡</sup>Corresponding author</p>
+    <div class="btns">
+      <a class="btn btn-primary" href="report/VLAFlow_Technical_Report.pdf">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+        Technical Report
+      </a>
+      <a class="btn btn-ghost" href="https://github.com/MindVLA-Team/VLAFlow">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.3-1.7-1.3-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.79 2.73 1.27 3.4.97.1-.76.41-1.27.74-1.56-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.69 5.4-5.25 5.68.42.36.8 1.08.8 2.18v3.23c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5z"/></svg>
+        Code
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- TEASER FIGURE -->
+<div class="wrap teaser reveal">
+  <div class="fig-card">
+    <img class="zoomable" src="assets/framework_overview.png" alt="VLAFlow framework overview">
+    <div class="cap"><b>Overview of VLAFlow.</b> A shared VLM backbone feeds a flow-matching action expert via KV-cache sharing (A); four pre-training paradigms differ only in supervision (B); all are fine-tuned and evaluated under one protocol (C).</div>
+  </div>
+</div>
+
+<!-- ABSTRACT -->
+<section id="abstract">
+  <div class="wrap reveal">
+    <span class="kicker">Abstract</span>
+    <h2>One framework, one variable: the training signal</h2>
+    <div class="abstract" style="margin-top:20px">
+      <p style="margin-top:0">Different VLA pre-training paradigms are hard to compare because existing models differ in architecture, data, action space, and evaluation. <b>VLAFlow</b> removes those confounders: it fixes a single π₀-style flow-matching architecture, a shared VLM backbone, one action expert, a unified <b>14-D action space</b>, and one evaluation protocol — so the <b>only variable is the training supervision signal</b>. Under this controlled setup we compare four paradigms on ~<b>5,000 hours</b> of heterogeneous robot data (<b>OXEMix</b>) and evaluate on LIBERO, LIBERO-Plus, and SimplerEnv.</p>
+      <div class="callout">
+        <p><b>Key result.</b> Action-only pre-training is fragile on heterogeneous data and can <i>hurt</i> transfer. <b>Language supervision</b> (high-level intent) and <b>future-latent alignment</b> (state transition) are <b>complementary</b> intermediate constraints; combining them (<b>MindLWPI</b>) yields the most stable transfer across all three benchmarks.</p>
+      </div>
+      <p style="margin-bottom:0; color:var(--muted); font-size:.94rem">VLAFlow is a <b>framework / benchmark, not a single model</b>. “Flow” refers both to the flow-matching action mechanism and to how three supervision signals — low-level actions, language intent, and future latent states — <i>flow</i> into the same action-generation backbone.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HIGHLIGHTS -->
+<section id="highlights" style="background:linear-gradient(180deg,#fff,var(--mist))">
+  <div class="wrap reveal">
+    <span class="kicker">Highlights</span>
+    <h2>What we contribute</h2>
+    <div class="grid">
+      <div class="card"><div class="num">1</div><h3>Controlled comparison</h3><p>Four training objectives compared under one architecture, action space, data mixture, and evaluation protocol — isolating the effect of the <i>training signal</i> itself.</p></div>
+      <div class="card"><div class="num">2</div><h3>Negative transfer is real</h3><p>Full-parameter action-only pre-training on heterogeneous data can perform <i>worse</i> than no pre-training; freezing the VLM preserves generalization but under-uses robot data.</p></div>
+      <div class="card"><div class="num">3</div><h3>Complementary supervision</h3><p>Language injects “what to do” (intent); future-latent prediction injects “what the action changes” (state transition). Combined, they smooth heterogeneous action supervision.</p></div>
+      <div class="card"><div class="num">4</div><h3>Meta-action space</h3><p>Language space and future visual latent space act as intermediate constraints that bridge heterogeneous embodiments into a smoother, more transferable action representation.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- PARADIGMS -->
+<section id="paradigms">
+  <div class="wrap reveal">
+    <span class="kicker">The Four Paradigms</span>
+    <h2>Same backbone — different supervision</h2>
+    <p class="lead">All paradigms share the same inputs, backbone, action expert, and downstream control form. They differ <b>only</b> in whether language supervision, future-latent supervision, or both are added. <code class="inl">PT</code> = pre-training, <code class="inl">FT</code> = fine-tuning.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Paradigm</th><th>Auxiliary supervision</th><th>PT loss</th><th>FT loss</th><th>Main role</th></tr></thead>
+        <tbody>
+          <tr><td>MindPI</td><td>—</td><td><code class="inl">L_act</code></td><td><code class="inl">L_act</code></td><td style="text-align:left">Action-only transfer baseline</td></tr>
+          <tr><td>MindLPI</td><td>language</td><td><code class="inl">L_act + λ·L_lang</code></td><td><code class="inl">L_act</code></td><td style="text-align:left">Injects high-level action intent via language</td></tr>
+          <tr><td>MindWPI</td><td>future latent</td><td><code class="inl">L_act + λ·L_lat</code></td><td><code class="inl">L_act + λ·L_lat</code></td><td style="text-align:left">Regularizes with future-state prediction</td></tr>
+          <tr class="ours"><td>MindLWPI</td><td>language + future latent</td><td><code class="inl">L_act + λ·L_lat + λ·L_lang</code></td><td><code class="inl">L_act + λ·L_lat</code></td><td style="text-align:left">Combines intent + state-transition constraints</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout"><p><b>Recipe.</b> <code class="inl">λ_lang = 0.1</code> (language loss used in PT only, dropped at FT so control frequency is unaffected); MindWPI/MindLWPI use action:latent = <b>1:1</b> during PT and <b>0.1:1</b> during FT; MindLPI uses <b>no stop-gradient</b> — the action loss backpropagates into the VLM (ablations show stop-gradient hurts sharply).</p></div>
+  </div>
+</section>
+
+<!-- METHOD -->
+<section id="method" style="background:linear-gradient(180deg,var(--mist),#fff)">
+  <div class="wrap reveal">
+    <span class="kicker">Framework at a Glance</span>
+    <h2>A shared π₀-style flow-matching backbone</h2>
+    <div class="cols">
+      <div class="panel">
+        <h3>Backbone &amp; action expert</h3>
+        <ul>
+          <li><b>VLM:</b> Qwen3-VL-4B-Instruct (36 layers, hidden 2048, 16 heads / 8 KV heads).</li>
+          <li><b>Action expert:</b> a DiT decoder (36 blocks, hidden 1280) predicting a flow-matching velocity field for a chunk of length <b>T = 16</b>; AdaLN timestep, RoPE, <b>4 Euler steps</b> at inference.</li>
+          <li><b>Layer-wise KV-cache sharing:</b> the action expert never re-encodes images — it reuses the VLM's per-layer K/V, depth-aligned.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>Action space, flow &amp; latents</h3>
+        <ul>
+          <li><b>Unified 14-D action:</b> two 7-DoF arms (EE translation + rotation + gripper); single-arm data zero-padded with a validity mask.</li>
+          <li><b>Flow matching:</b> <code class="inl">x_t = (1−t)·ε + t·a</code>, target velocity <code class="inl">a − ε</code>.</li>
+          <li><b>Future latents (WPI/LWPI):</b> frozen <b>V-JEPA 2</b> extracts current/future latents (offset <b>8</b>); MindLWPI compresses 256 → 64 tokens with <b>AvgPool-k4</b>.</li>
+        </ul>
+      </div>
+    </div>
+    <figure>
+      <img class="zoomable" src="assets/attention_mask.png" alt="VLAFlow structured attention mask">
+      <figcaption><b>Structured attention mask.</b> Latent tokens attend to the VLM cache and latent tokens but <b>not</b> to action tokens (preventing a shortcut through the action trajectory); action tokens attend to everything and thus use the predictive latent as context.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- DATA -->
+<section id="data">
+  <div class="wrap reveal">
+    <span class="kicker">OXEMix Corpus</span>
+    <h2>~5,000 hours of heterogeneous robot data</h2>
+    <p class="lead">A medium-scale, open-source mixture converted to LeRobot format and mapped into the unified 14-D action space. Sources: DROID, OpenX-Embodiment, OpenX-Augmented, and RoboCOIN. Sampling balances dataset scale and trajectory length.</p>
+    <figure>
+      <img class="zoomable" src="assets/oxemix_composition.png" alt="OXEMix data composition">
+      <figcaption><b>OXEMix composition</b> by duration and trajectory count.</figcaption>
+    </figure>
+    <div class="table-wrap">
+      <table style="min-width:520px">
+        <thead><tr><th>Source</th><th>Duration</th><th>Episodes</th></tr></thead>
+        <tbody>
+          <tr><td>OpenX (raw, incl. DROID)</td><td>1,365.1 h&nbsp;(27.2%)</td><td>509,203&nbsp;(33.1%)</td></tr>
+          <tr><td>OpenX-Augmented</td><td>3,512.0 h&nbsp;(70.0%)</td><td>1,010,536&nbsp;(65.8%)</td></tr>
+          <tr><td>RoboCOIN</td><td>140.9 h&nbsp;(2.8%)</td><td>16,870&nbsp;(1.1%)</td></tr>
+          <tr class="ours"><td>Total</td><td>5,017.9 h</td><td>1,536,609</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section id="results" style="background:linear-gradient(180deg,#fff,var(--mist))">
+  <div class="wrap reveal">
+    <span class="kicker">Results</span>
+    <h2>Transfer across LIBERO, LIBERO-Plus &amp; SimplerEnv</h2>
+    <p class="lead">LIBERO is a near-saturated in-distribution check; LIBERO-Plus measures zero-shot robustness; SimplerEnv exposes cross-embodiment transfer. Success rate (%). Green = best in column; tinted rows are our combined method.</p>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="controlled">Controlled comparison</button>
+      <button class="tab" data-tab="public">SimplerEnv vs. public</button>
+    </div>
+
+    <div class="tab-panel active" id="controlled">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Method</th><th>Robot PT</th><th>Aux. supervision</th><th>LIBERO Avg</th><th>LIBERO-Plus</th><th>WidowX</th><th>RT-1 VM</th><th>RT-1 VA</th></tr></thead>
+          <tbody>
+            <tr class="grp"><td colspan="8">No robot-data pre-training</td></tr>
+            <tr><td>MindPI w/o PT</td><td>✗</td><td>—</td><td>97.0</td><td>59.9</td><td>59.6</td><td>75.7</td><td>60.4</td></tr>
+            <tr><td>MindWPI w/o PT</td><td>✗</td><td>future latent</td><td>97.4</td><td>66.1</td><td>71.9</td><td>75.2</td><td>51.6</td></tr>
+            <tr class="grp"><td colspan="8">Action-only pre-training</td></tr>
+            <tr><td>MindPI (Frozen VLM)</td><td>✓</td><td>—</td><td>97.2</td><td class="best">74.9</td><td>54.4</td><td>72.7</td><td>66.0</td></tr>
+            <tr><td>MindPI (Full PT)</td><td>✓</td><td>—</td><td>97.5</td><td>68.8</td><td>65.9</td><td>68.2</td><td>55.5</td></tr>
+            <tr class="grp"><td colspan="8">Auxiliary-supervised pre-training</td></tr>
+            <tr><td>MindLPI</td><td>✓</td><td>language</td><td>97.2</td><td>72.3</td><td>65.6</td><td>74.6</td><td>59.2</td></tr>
+            <tr><td>MindWPI</td><td>✓</td><td>future latent</td><td>98.5</td><td>72.6</td><td>74.5</td><td class="best">86.7</td><td class="best">71.1</td></tr>
+            <tr class="ours"><td>MindLWPI</td><td>✓</td><td>language + future latent</td><td class="best">99.1</td><td>74.8</td><td class="best">75.5</td><td>84.4</td><td>69.8</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="cap" style="text-align:left; margin-top:14px">
+        <b>MindPI (Full PT)</b> improves WidowX but <b>degrades on RT-1</b> → action-only pre-training is unstable.
+        <b>MindWPI</b> gives the strongest RT-1 transfer → future-latent alignment models action outcomes well.
+        <b>MindLWPI</b> is the most stable overall → language and future-latent supervision are complementary.
+      </p>
+    </div>
+
+    <div class="tab-panel" id="public">
+      <div class="table-wrap">
+        <table style="min-width:560px">
+          <thead><tr><th>Method</th><th>Size</th><th>RT-1 VM</th><th>RT-1 VA</th><th>WidowX</th></tr></thead>
+          <tbody>
+            <tr><td>π₀</td><td>3B</td><td>58.8</td><td>56.8</td><td>27.8</td></tr>
+            <tr><td>π₀ + FAST</td><td>3B</td><td>61.9</td><td>60.5</td><td>39.5</td></tr>
+            <tr><td>OpenVLA-OFT</td><td>7B</td><td>63.0</td><td>54.3</td><td>31.3</td></tr>
+            <tr><td>SpatialVLA</td><td>4B</td><td>75.1</td><td>70.7</td><td>42.7</td></tr>
+            <tr><td>MemoryVLA</td><td>7B</td><td>77.7</td><td class="best">72.7</td><td>71.9</td></tr>
+            <tr class="ours"><td>MindWPI (ours)</td><td>4B</td><td class="best">86.7</td><td>71.1</td><td>74.5</td></tr>
+            <tr class="ours"><td>MindLWPI (ours)</td><td>4B</td><td>84.4</td><td>69.8</td><td class="best">75.5</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="cap" style="text-align:left; margin-top:14px">Public baselines are absolute-performance references at various model sizes. VLAFlow uses Bridge-only fine-tuning for WidowX and RT-1-only for RT-1. On LIBERO, MindLWPI reaches <b>99.1</b> average (99.2 / 99.8 / 99.2 / 98.2 on Spatial / Object / Goal / Long).</p>
+    </div>
+  </div>
+</section>
+
+<!-- INSIGHT -->
+<section id="insight">
+  <div class="wrap reveal">
+    <span class="kicker">Key Insight</span>
+    <h2>Flattening a fragmented action space</h2>
+    <p class="lead">Low-dimensional action labels alone struggle to form a stable representation across heterogeneous embodiments, sampling rates, and action definitions. Language (high-level intent) and future latents (state transition) provide complementary intermediate constraints that “flatten” the raw action space into a smoother, more transferable <b>meta-action space</b>.</p>
+    <figure>
+      <img class="zoomable" src="assets/meta_action_space.png" alt="Meta-action space interpretation">
+      <figcaption><b>Meta-action space.</b> Intermediate language and latent representations bridge intent and execution, reducing negative transfer across embodiments.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- BIBTEX -->
+<section id="bibtex" style="background:linear-gradient(180deg,var(--mist),#fff)">
+  <div class="wrap reveal">
+    <span class="kicker">Citation</span>
+    <h2>BibTeX</h2>
+    <div class="code-box">
+      <button class="copy" id="copyBtn">Copy</button>
+      <pre id="bib">@techreport{xia2026vlaflow,
+  title       = {VLAFlow: A Unified Training Framework for Vision-Language-Action
+                 Models via Co-training and Future Latent Alignment},
+  author      = {Xia, Guoyang and Li, Fengfa and Ji, Hongjin and Ren, Lei and
+                 Feng, Fangxiang and Zhan, Kun and Xie, Yan},
+  institution = {Li Auto Inc.},
+  year        = {2026},
+  note        = {Technical Report}
+}</pre>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div style="font-weight:800; font-size:1.15rem; color:#fff">VLAFlow</div>
+    <div class="foot-links">
+      <a href="report/VLAFlow_Technical_Report.pdf">Technical Report</a>
+      <a href="https://github.com/MindVLA-Team/VLAFlow">Code</a>
+      <a href="https://mindvla-team.github.io/VLAFlow/">Project Page</a>
+    </div>
+    <div class="foot-small">
+      Released under the Apache License 2.0 · © 2026 Li Auto Inc.<br>
+      Li Auto Inc. · School of Artificial Intelligence, BUPT · The Chinese University of Hong Kong, Shenzhen
+    </div>
+  </div>
+</footer>
+
+<!-- LIGHTBOX + BACK TO TOP -->
+<div class="lightbox" id="lightbox"><span class="x">&times;</span><img alt="enlarged figure"></div>
+<button id="top" aria-label="Back to top">↑</button>
+
+<script>
+(function(){
+  // Scroll reveal
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('is-visible'); io.unobserve(e.target); }});
+  }, {threshold:0.12});
+  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+
+  // Active nav link
+  var links = Array.prototype.slice.call(document.querySelectorAll('.nav-links a'));
+  var map = {};
+  links.forEach(function(a){ var id=a.getAttribute('href').slice(1); var s=document.getElementById(id); if(s) map[id]=a; });
+  var navIO = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){ links.forEach(function(l){l.classList.remove('active');});
+        var a=map[e.target.id]; if(a) a.classList.add('active'); }
+    });
+  }, {rootMargin:'-45% 0px -50% 0px'});
+  Object.keys(map).forEach(function(id){ navIO.observe(document.getElementById(id)); });
+
+  // Tabs
+  document.querySelectorAll('.tab').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('active');});
+      document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // Copy BibTeX
+  var copyBtn = document.getElementById('copyBtn');
+  copyBtn.addEventListener('click', function(){
+    var t = document.getElementById('bib').textContent;
+    navigator.clipboard.writeText(t).then(function(){
+      copyBtn.textContent='Copied!'; copyBtn.classList.add('done');
+      setTimeout(function(){ copyBtn.textContent='Copy'; copyBtn.classList.remove('done'); }, 1600);
+    });
+  });
+
+  // Lightbox
+  var lb = document.getElementById('lightbox'), lbImg = lb.querySelector('img');
+  document.querySelectorAll('.zoomable').forEach(function(img){
+    img.addEventListener('click', function(){ lbImg.src = img.src; lb.classList.add('open'); });
+  });
+  lb.addEventListener('click', function(){ lb.classList.remove('open'); });
+
+  // Back to top
+  var topBtn = document.getElementById('top');
+  topBtn.addEventListener('click', function(){ window.scrollTo({top:0, behavior:'smooth'}); });
+  window.addEventListener('scroll', function(){
+    if(window.scrollY > 600) topBtn.classList.add('show'); else topBtn.classList.remove('show');
+  }, {passive:true});
+})();
+</script>
+</body>
+</html>

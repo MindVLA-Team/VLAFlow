@@ -11,7 +11,8 @@ Guoyang Xia<sup>1,2,*</sup>&nbsp;&nbsp; Fengfa Li<sup>1,*</sup>&nbsp;&nbsp; Hong
 <sup>*</sup>Equal contribution&nbsp;&nbsp; <sup>†</sup>Project leader&nbsp;&nbsp; <sup>‡</sup>Corresponding author
 
 [![Technical Report](https://img.shields.io/badge/Technical%20Report-PDF-b31b1b.svg)](report/VLAFlow_Technical_Report.pdf)
-[![Project Page](https://img.shields.io/badge/Project%20Page-VLAFlow-0B5D43.svg)](https://github.com/MindVLA-Team/VLAFlow)
+[![Project Page](https://img.shields.io/badge/Project%20Page-Website-0B5D43.svg)](https://mindvla-team.github.io/VLAFlow/)
+[![Code](https://img.shields.io/badge/Code-GitHub-181717.svg?logo=github)](https://github.com/MindVLA-Team/VLAFlow)
 
 </div>
 
@@ -166,8 +167,8 @@ Same evaluation protocol, so VLAFlow variants sit alongside public numbers (succ
 | π₀ + FAST | 3B | 61.9 | 60.5 | 39.5 |
 | OpenVLA-OFT | 7B | 63.0 | 54.3 | 31.3 |
 | SpatialVLA | 4B | 75.1 | 70.7 | 42.7 |
-| MemoryVLA | 7B | 77.7 | 72.7 | 71.9 |
-| **MindWPI (ours)** | 4B | **86.7** | **71.1** | 74.5 |
+| MemoryVLA | 7B | 77.7 | **72.7** | 71.9 |
+| **MindWPI (ours)** | 4B | **86.7** | 71.1 | 74.5 |
 | **MindLWPI (ours)** | 4B | 84.4 | 69.8 | **75.5** |
 
 On LIBERO, MindLWPI reaches **99.1** average (99.2 / 99.8 / 99.2 / 98.2 on Spatial / Object / Goal /
