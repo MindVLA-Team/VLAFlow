@@ -5,7 +5,9 @@ This product includes software and materials developed at Li Auto Inc.
 
 VLAFlow: A Unified Training Framework for Vision-Language-Action Models
 via Co-training and Future Latent Alignment.
-Project page: https://github.com/MindVLA-Team/VLAFlow
+Paper (arXiv): https://arxiv.org/abs/2607.01586
+Project page:  https://mindvla-team.github.io/VLAFlow/
+Code:          https://github.com/MindVLA-Team/VLAFlow
 
 Licensed under the Apache License, Version 2.0 (the "License").
 You may obtain a copy of the License at:

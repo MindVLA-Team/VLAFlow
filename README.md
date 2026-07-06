@@ -10,9 +10,10 @@ Guoyang Xia<sup>1,2,*</sup>&nbsp;&nbsp; Fengfa Li<sup>1,*</sup>&nbsp;&nbsp; Hong
 
 <sup>*</sup>Equal contribution&nbsp;&nbsp; <sup>†</sup>Project leader&nbsp;&nbsp; <sup>‡</sup>Corresponding author
 
-[![Technical Report](https://img.shields.io/badge/Technical%20Report-PDF-b31b1b.svg)](report/VLAFlow_Technical_Report.pdf)
+[![arXiv](https://img.shields.io/badge/arXiv-2607.01586-b31b1b.svg?logo=arxiv&logoColor=white)](https://arxiv.org/abs/2607.01586)
+[![Paper PDF](https://img.shields.io/badge/Paper-PDF-4b5563.svg)](report/VLAFlow_Technical_Report.pdf)
 [![Project Page](https://img.shields.io/badge/Project%20Page-Website-0B5D43.svg)](https://mindvla-team.github.io/VLAFlow/)
-[![Code](https://img.shields.io/badge/Code-GitHub-181717.svg?logo=github)](https://github.com/MindVLA-Team/VLAFlow)
+[![Code](https://img.shields.io/badge/Code-GitHub-181717.svg?logo=github&logoColor=white)](https://github.com/MindVLA-Team/VLAFlow)
 
 </div>
 
@@ -204,9 +205,9 @@ action space into a smoother, more transferable **meta-action space**.
 ## Report
 
 The full technical report (method, appendices with KV-cache/attention-mask/latent details, complete
-result tables, and hyperparameters) is included in this repository:
+result tables, and hyperparameters) is available on arXiv and included in this repository:
 
-📄 [**report/VLAFlow_Technical_Report.pdf**](report/VLAFlow_Technical_Report.pdf)
+🔗 [**arXiv:2607.01586**](https://arxiv.org/abs/2607.01586) &nbsp;·&nbsp; 📄 [**report/VLAFlow_Technical_Report.pdf**](report/VLAFlow_Technical_Report.pdf)
 
 ---
 
@@ -215,14 +216,13 @@ result tables, and hyperparameters) is included in this repository:
 If you find VLAFlow useful, please cite:
 
 ```bibtex
-@techreport{xia2026vlaflow,
-  title       = {VLAFlow: A Unified Training Framework for Vision-Language-Action
-                 Models via Co-training and Future Latent Alignment},
-  author      = {Xia, Guoyang and Li, Fengfa and Ji, Hongjin and Ren, Lei and
-                 Feng, Fangxiang and Zhan, Kun and Xie, Yan},
-  institution = {Li Auto Inc.},
-  year        = {2026},
-  note        = {Technical Report}
+@article{xia2026vlaflow,
+  title   = {VLAFlow: A Unified Training Framework for Vision-Language-Action
+             Models via Co-training and Future Latent Alignment},
+  author  = {Xia, Guoyang and Li, Fengfa and Ji, Hongjin and Ren, Lei and
+             Feng, Fangxiang and Zhan, Kun and Xie, Yan},
+  journal = {arXiv preprint arXiv:2607.01586},
+  year    = {2026}
 }
 ```
 
