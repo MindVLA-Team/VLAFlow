@@ -1,4 +1,7 @@
-# Copyright (c) 2026 Li Auto. (VLAFlow modifications)
+# Copyright (c) 2026 Li Auto Inc. (VLAFlow modifications)
+# VLAFlow modifications are licensed under Apache-2.0; see LICENSE.
+#
+# Original upstream notice (terms retained in LICENSES/LicenseRef-StarVLA.txt):
 # Copyright 2025 starVLA community. All rights reserved.
 # Licensed under the MIT License, Version 1.0 (the "License");
 """

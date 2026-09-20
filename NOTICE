@@ -1,6 +1,9 @@
 VLAFlow
 Copyright 2026 Li Auto Inc.
 
+VLAFlow's original code and Li Auto's modifications are licensed under
+the Apache License, Version 2.0. See LICENSE for the full license text.
+
 Li Auto claims copyright only in its contributions. Original upstream
 copyright and license notices remain applicable to third-party components.
 See LICENSE, THIRD_PARTY_NOTICES.md, and LICENSES/ for the relevant terms.
@@ -10,7 +13,9 @@ their Apache License 2.0 terms. Their original
 license and NOTICE are preserved without changes in
 LICENSES/Project-materials-Apache-2.0.txt and
 LICENSES/Project-materials-NOTICE.txt. This attribution does not relicense
-third-party code or resolve the pending code-license review.
+third-party code. StarVLA's upstream terms, including its additional
+commit-history wording, remain in LICENSES/LicenseRef-StarVLA.txt and
+THIRD_PARTY_NOTICES.md.
 
 The technical report was replaced with the author-supplied
 arXiv:2607.01586v2 PDF (August 4, 2026), without modifying its contents

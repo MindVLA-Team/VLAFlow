@@ -1,5 +1,8 @@
+# Copyright (c) 2026 Li Auto Inc. (metrics-only adaptation)
+# VLAFlow modifications are licensed under Apache-2.0; see LICENSE.
+#
+# Original SimplerEnv notice:
 # Copyright (c) 2024 simpler-env
-# Copyright (c) 2026 Li Auto. (metrics-only adaptation)
 # SPDX-License-Identifier: MIT
 # Original license: LICENSES/SimplerEnv.txt
 """

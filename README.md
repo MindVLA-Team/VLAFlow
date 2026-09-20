@@ -256,9 +256,13 @@ Machine-readable citation metadata is available in [`CITATION.cff`](CITATION.cff
 
 ## License
 
-VLAFlow contributions are copyright Li Auto. See [`LICENSE`](LICENSE) for the current code
-license text, including the retained StarVLA attribution and additional upstream wording.
-Third-party components retain their respective terms in source headers and [`LICENSES/`](LICENSES/).
+VLAFlow's original code and Li Auto's modifications are released under the
+**[Apache License 2.0](LICENSE)**. Copyright 2026 Li Auto Inc.
+
+Third-party components retain their respective terms in source headers and [`LICENSES/`](LICENSES/),
+including the [StarVLA license and additional upstream wording](LICENSES/LicenseRef-StarVLA.txt).
+The package's license expression includes these third-party terms alongside Apache-2.0;
+it does not replace or remove their attribution and redistribution requirements.
 The existing project website and figures retain their
 [Apache-2.0 license](LICENSES/Project-materials-Apache-2.0.txt) and
 [original notice](LICENSES/Project-materials-NOTICE.txt).
@@ -266,7 +270,4 @@ The updated technical report is included as supplied by the authors, without mod
 its embedded arXiv license metadata is preserved. This repository does not assign a new
 license to that PDF. See [Third-party notices](THIRD_PARTY_NOTICES.md) for details.
 
-**Release-candidate note:** the code license and the previously published project's Apache-2.0
-license are not yet unified. Maintainers should resolve the licensing checklist in
-[Release preparation](docs/releasing.md) before publishing this candidate. No license to
-separately downloaded model weights or datasets is granted by this repository.
+No license to separately downloaded model weights or datasets is granted by this repository.

@@ -22,6 +22,5 @@ url: 'https://mindvla-team.github.io/VLAFlow'
 identifiers:
   - type: other
     value: 'arXiv:2607.01586'
-# Add a license identifier once the release license review is resolved.
-# LICENSE currently includes additional upstream terms, not only standard MIT.
+license: Apache-2.0
 license-url: 'https://github.com/MindVLA-Team/VLAFlow/blob/main/LICENSE'

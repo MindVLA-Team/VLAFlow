@@ -1,6 +1,14 @@
 # Third-party notices
 
-VLAFlow includes derived code. Original source-file copyright and license headers are retained. Li Auto. claims copyright only in its contributions.
+VLAFlow's original code and Li Auto's modifications are licensed under Apache-2.0;
+see [LICENSE](LICENSE). Li Auto Inc. claims copyright only in its contributions.
+VLAFlow also includes derived code. Original upstream copyright and license notices
+are retained and continue to apply to the corresponding third-party material.
+
+Package metadata uses `Apache-2.0 AND MIT AND BSD-3-Clause AND LicenseRef-StarVLA`
+to describe the combined terms of the distributed code. `LicenseRef-StarVLA` refers to
+the [preserved upstream license text](LICENSES/LicenseRef-StarVLA.txt), including its
+additional commit-history wording; it is not an alternative license for VLAFlow's contributions.
 
 ## Upstream project license (verbatim)
 
@@ -69,4 +77,5 @@ The missing license texts above were checked against these upstream sources on 2
 
 The retained StarVLA text contains commit-history wording in addition to standard MIT terms.
 Do not delete this wording or assume that replacing the root license removes upstream
-obligations. See [Release preparation](docs/releasing.md) for the unresolved review items.
+obligations. Confirm the applicable upstream terms and commit-history requirements before
+publishing a snapshot import or squash.
