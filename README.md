@@ -21,199 +21,225 @@ Guoyang Xia<sup>1,2,*</sup>&nbsp;&nbsp; Fengfa Li<sup>1,*</sup>&nbsp;&nbsp; Hong
   <img src="assets/framework_overview.png" width="100%" alt="VLAFlow framework overview">
 </p>
 
----
-
 ## TL;DR
 
-Different VLA pre-training paradigms are hard to compare because existing models differ in
-architecture, data, action space, and evaluation. **VLAFlow** removes those confounders: it fixes
-a single π₀-style flow-matching architecture, a shared VLM backbone, one action expert, a unified
-14-D action space, and one evaluation protocol — so the **only variable is the training supervision
-signal**. Under this controlled setup we compare four paradigms on ~5,000 hours of heterogeneous
-robot data (**OXEMix**) and evaluate on LIBERO, LIBERO-Plus, and SimplerEnv.
+**VLAFlow is a unified training framework, not a single model.** It compares action-only
+learning, language co-training, future-latent alignment, and their combination under a shared
+flow-matching architecture, VLM backbone, 14-D action space, data mixture, and evaluation protocol.
+This controlled setup isolates the effect of the **training supervision signal**.
 
-> **Key result:** action-only pre-training is fragile on heterogeneous data and can *hurt* transfer.
-> **Language supervision** (high-level intent) and **future-latent alignment** (state transition) are
-> **complementary** intermediate constraints; combining them (**MindLWPI**) gives the most stable
-> transfer across all three benchmarks.
+> **Key finding from the paper:** action-only pre-training on heterogeneous robot data can hurt
+> downstream transfer. Language supervision captures high-level intent, while future-latent
+> alignment captures state transitions. Combining them in **MindLWPI** supports more consistent
+> transfer across LIBERO, LIBERO-Plus, and SimplerEnv.
 
-VLAFlow is a **framework/benchmark, not a single model**. "Flow" refers both to the flow-matching
-action mechanism and to how three supervision signals — low-level actions, language intent, and
-future latent states — *flow* into the same action-generation backbone.
+## TODO
 
----
+- [x] Release training code.
+- [ ] Release pre-trained weights and downstream fine-tuned weights.
+- [ ] Provide an SO-ARM real-world experiment demo.
+
+The training implementation and recipes are included in this release candidate; the first item
+tracks their public release. Model weights, datasets, and the SO-ARM demo are not bundled.
 
 ## Highlights
 
-- **A controlled comparison of VLA training paradigms.** Four objectives compared under one
-  architecture, action space, data mixture, and evaluation protocol — isolating the effect of the
-  *training signal* itself.
-- **Action-only pre-training can cause negative transfer.** Full-parameter action-only pre-training
-  on heterogeneous data can perform *worse* than no pre-training; freezing the VLM preserves
-  vision-language generalization but under-uses robot data.
-- **Language ⟂ future-latent supervision are complementary.** Language injects "what to do"
-  (intent); future-latent prediction injects "what the action changes" (state transition). Combined,
-  they smooth heterogeneous action supervision.
-- **A meta-action-space interpretation.** Language space and future visual latent space act as
-  intermediate constraints that bridge heterogeneous embodiments into a smoother, more transferable
-  action representation.
+- **Controlled comparisons:** the same backbone and action expert support different supervision
+  objectives, alongside frozen-VLM and no-robot-pretraining controls.
+- **Complementary supervision:** language describes what to do; future visual latents constrain
+  how the scene should change.
+- **Heterogeneous robot data:** OXEMix combines approximately 5,018 hours of robot trajectories
+  in a unified action representation.
+- **Training and evaluation recipes:** OXEMix pre-training, LIBERO and Bridge/RT-1 fine-tuning,
+  and policy-server evaluation on LIBERO, LIBERO-Plus, and SimplerEnv.
 
----
+## Training Paradigms
 
-## The Four Paradigms
+The paper studies four paradigms. **This code release contains three implementations**;
+MindLPI and the broader ablation collection are not included.
 
-All paradigms share the same inputs, backbone, action expert, and downstream control form. They
-differ **only** in whether language supervision, future-latent supervision, or both are added during
-training. `PT` = pre-training, `FT` = downstream fine-tuning.
+| Paper name | Auxiliary supervision | Implementation in this release |
+| --- | --- | --- |
+| **MindPI** | None; action-only baseline | `MindPI` |
+| **MindWPI** | Future latent | `MindWPI` |
+| **MindLWPI** | Language + future latent | `MindLWPI_Compressed` (AvgPool-k4) |
 
-| Paradigm | Auxiliary supervision | PT loss | FT loss | Main role |
-|---|---|---|---|---|
-| **MindPI** | — | `L_act` | `L_act` | Action-only transfer baseline |
-| **MindLPI** | language | `L_act + λ_lang·L_lang` | `L_act` | Injects high-level **action intent** via language |
-| **MindWPI** | future latent | `L_act + λ_lat·L_lat` | `L_act + λ_lat·L_lat` | Regularizes with **future-state** prediction |
-| **MindLWPI** | language + future latent | `L_act + λ_lat·L_lat + λ_lang·L_lang` | `L_act + λ_lat·L_lat` | Combines **intent + state-transition** constraints |
+Language supervision is used during MindLWPI pre-training and disabled during downstream
+fine-tuning. Future-latent supervision remains active for MindWPI and MindLWPI. The released
+recipes use **latent:action loss weights of 1:1 in pre-training and 0.1:1 in fine-tuning**;
+the MindLWPI pre-training language weight is 0.1.
 
-Recipe conventions from the report: `λ_lang = 0.1` (language loss used **in PT only**, dropped at FT
-so control frequency is unaffected); MindWPI/MindLWPI use action:latent = **1:1** during PT and
-**0.1:1** during FT; MindLPI uses **no stop-gradient** (the action loss backpropagates into the VLM —
-ablations show stop-gradient hurts sharply).
+## Framework
 
----
-
-## Framework at a Glance
-
-- **Backbone:** Qwen3-VL-4B-Instruct (36 layers, hidden 2048, 16 heads / 8 KV heads, head-dim 128).
-- **Action expert:** a DiT decoder (36 blocks, hidden 1280) predicting a flow-matching velocity field
-  for an action chunk of length **T = 16**; timestep injected via AdaLN, RoPE on action tokens,
-  **4 Euler steps** at inference.
-- **Layer-wise KV-cache sharing:** the action expert does **not** re-encode images — at each layer it
-  reuses the VLM's key/value cache, concatenated with its own K/V, so multimodal context flows in
-  depth-aligned.
-- **Unified 14-D action space:** two 7-DoF arms (EE translation + rotation increments + gripper);
-  single-arm data is zero-padded with an action-validity mask.
-- **Flow matching:** noised action `x_t = (1−t)·ε + t·a`, target velocity `a − ε`; loss masked to
-  valid action dimensions.
-- **Future latents (MindWPI / MindLWPI):** a **frozen V-JEPA 2** extracts current/future-frame
-  latents (default future offset **8** frames); the action expert predicts the future latent while
-  predicting actions. MindLWPI compresses 256 → 64 latent tokens with **AvgPool-k4**.
-
-### Structured attention mask
-
-To stop future-latent prediction from taking a shortcut through the action trajectory, latent tokens
-may attend to the VLM cache and latent tokens but **not** to action tokens; action tokens may attend
-to everything and thus use the predictive latent as visual context.
+- **VLM backbone:** Qwen3-VL-4B-Instruct.
+- **Action expert:** a 36-layer, width-1280 DiT with layer-wise VLM KV-cache sharing.
+- **Action representation:** 14 dimensions, 16-step action chunks, and validity masks for
+  padded dimensions; single-arm evaluation uses the right-arm 7-D slice.
+- **Flow matching:** four Euler steps at inference.
+- **Future-latent targets:** a frozen V-JEPA 2 encoder, with a default future-frame offset of 8.
+  MindLWPI uses AvgPool-k4 latent compression.
+- **Structured attention:** latent tokens cannot attend to action tokens, while action tokens
+  can use the predictive latent context.
 
 <p align="center">
-  <img src="assets/attention_mask.png" width="72%" alt="VLAFlow attention mask">
+  <img src="assets/attention_mask.png" width="72%" alt="Structured attention for action and future-latent prediction">
 </p>
 
----
+## OXEMix
 
-## OXEMix Pre-training Corpus
-
-A medium-scale, open-source robot-data mixture (~**5,018 hours**, ~**1.54M** episodes) converted to
-LeRobot format and mapped into the unified 14-D action space. Sources: DROID, OpenX-Embodiment,
-OpenX-Augmented, and RoboCOIN. Sampling balances dataset scale and trajectory length.
-
-<p align="center">
-  <img src="assets/oxemix_composition.png" width="88%" alt="OXEMix data composition">
-</p>
+The paper's pre-training mixture combines OpenX-Embodiment (including DROID), OpenX-Augmented,
+and RoboCOIN, converted to LeRobot format and mapped into the shared action space.
 
 | Source | Duration | Episodes |
-|---|---:|---:|
-| OpenX (raw, incl. DROID) | 1,365.1 h (27.2%) | 509,203 (33.1%) |
-| OpenX-Augmented | 3,512.0 h (70.0%) | 1,010,536 (65.8%) |
-| RoboCOIN | 140.9 h (2.8%) | 16,870 (1.1%) |
+| --- | ---: | ---: |
+| OpenX (raw, including DROID) | 1,365.1 h | 509,203 |
+| OpenX-Augmented | 3,512.0 h | 1,010,536 |
+| RoboCOIN | 140.9 h | 16,870 |
 | **Total** | **5,017.9 h** | **1,536,609** |
 
----
+See [Data preparation](docs/data.md) for directory layouts, modality metadata, conversion,
+and global normalization statistics. Datasets must be obtained separately under their own terms.
 
-## Results
+## Results Reported in the Paper
 
-Evaluated on **LIBERO** (near-saturated in-distribution sanity check), **LIBERO-Plus** (zero-shot
-robustness under 7 perturbation types), and **SimplerEnv** (cross-embodiment transfer: WidowX/Bridge
-+ RT-1 Visual Matching / Visual Augmentation). *Negative transfer* = a pre-trained model doing worse
-than its no-pre-training baseline under the same FT protocol.
+Success rates (%), transcribed from the technical report and project README. **These are paper
+results, not a claim that this release candidate has re-run or reproduced every experiment.**
+PT means robot pre-training; VM/VA denote Visual Matching/Visual Augmentation.
 
-### Controlled comparison (main result)
+| Method | LIBERO Avg | LIBERO-Plus Total | WidowX Avg | RT-1 VM | RT-1 VA |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| MindPI w/o PT | 97.0 | 59.9 | 59.6 | 75.7 | 60.4 |
+| MindWPI w/o PT | 97.4 | 66.1 | 71.9 | 75.2 | 51.6 |
+| MindPI (Frozen VLM) | 97.2 | **74.9** | 54.4 | 72.7 | 66.0 |
+| MindPI (Full PT) | 97.5 | 68.8 | 65.9 | 68.2 | 55.5 |
+| MindLPI (paper only) | 97.2 | 72.3 | 65.6 | 74.6 | 59.2 |
+| MindWPI | 98.5 | 72.6 | 74.5 | **86.7** | **71.1** |
+| **MindLWPI** | **99.1** | 74.8 | **75.5** | 84.4 | 69.8 |
 
-Same architecture, action space, and evaluation protocol; the only difference is the training
-objective. For SimplerEnv, WidowX uses Bridge-only FT and RT-1 uses RT-1-only FT; MindLWPI uses
-AvgPool-k4 and downstream 0.1:1 ratio. **Bold** = best per column.
+WidowX uses Bridge-only fine-tuning; RT-1 uses RT-1-only fine-tuning. LIBERO-Plus evaluates
+LIBERO-fine-tuned policies without additional training. Full protocols, ablations, and baseline
+comparisons are in the [technical report](report/VLAFlow_Technical_Report.pdf).
+The bundled report is **arXiv:2607.01586v2 (August 4, 2026)**, with 38 PDF pages.
 
-| Method | Robot PT | Aux. supervision | LIBERO Avg | LIBERO-Plus Total | WidowX Avg | RT-1 VM | RT-1 VA |
-|---|:---:|---|:---:|:---:|:---:|:---:|:---:|
-| MindPI w/o PT | ✗ | — | 97.0 | 59.9 | 59.6 | 75.7 | 60.4 |
-| MindWPI w/o PT | ✗ | future latent | 97.4 | 66.1 | 71.9 | 75.2 | 51.6 |
-| MindPI (Frozen VLM) | ✓ | — | 97.2 | **74.9** | 54.4 | 72.7 | 66.0 |
-| MindPI (Full PT) | ✓ | — | 97.5 | 68.8 | 65.9 | 68.2 | 55.5 |
-| MindLPI | ✓ | language | 97.2 | 72.3 | 65.6 | 74.6 | 59.2 |
-| MindWPI | ✓ | future latent | 98.5 | 72.6 | 74.5 | **86.7** | **71.1** |
-| **MindLWPI** | ✓ | language + future latent | **99.1** | 74.8 | **75.5** | 84.4 | 69.8 |
+## Installation
 
-- **MindPI (Full PT)** improves WidowX over no-PT but **degrades on RT-1** → action-only pre-training
-  is unstable under heterogeneous data.
-- **MindWPI** gives the **strongest RT-1 transfer** → future-latent alignment is especially effective
-  for action-outcome / state-transition modeling.
-- **MindLWPI** is the **most stable overall** (best on LIBERO, LIBERO-Plus context, and WidowX; close
-  to best on RT-1) → language and future-latent supervision are complementary.
+Use **Linux with NVIDIA GPUs**, Python 3.10, and a compatible CUDA/PyTorch environment for
+training. The runtime dependencies pin PyTorch 2.6.0, torchvision 0.21.0, and Transformers 4.57.0.
 
-### Against public baselines on SimplerEnv
+```bash
+git clone https://github.com/MindVLA-Team/VLAFlow.git
+cd VLAFlow
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e '.[dev,eval]'
 
-Same evaluation protocol, so VLAFlow variants sit alongside public numbers (success rate, %).
+# Optional, after matching the CUDA toolkit and PyTorch:
+python -m pip install flash-attn --no-build-isolation
+```
 
-| Method | Size | RT-1 VM | RT-1 VA | WidowX |
-|---|:---:|:---:|:---:|:---:|
-| π₀ | 3B | 58.8 | 56.8 | 27.8 |
-| π₀ + FAST | 3B | 61.9 | 60.5 | 39.5 |
-| OpenVLA-OFT | 7B | 63.0 | 54.3 | 31.3 |
-| SpatialVLA | 4B | 75.1 | 70.7 | 42.7 |
-| MemoryVLA | 7B | 77.7 | **72.7** | 71.9 |
-| **MindWPI (ours)** | 4B | **86.7** | 71.1 | 74.5 |
-| **MindLWPI (ours)** | 4B | 84.4 | 69.8 | **75.5** |
+The backbone falls back to PyTorch SDPA when FlashAttention is unavailable. Install each
+benchmark simulator in its own environment; the policy server runs in the VLAFlow environment.
+Data conversion may also require `ffmpeg`; see [Data preparation](docs/data.md).
 
-On LIBERO, MindLWPI reaches **99.1** average (99.2 / 99.8 / 99.2 / 98.2 on Spatial / Object / Goal /
-Long), competitive with recent strong baselines while being compared under a unified protocol. Full
-per-suite and per-perturbation tables are in the [technical report](report/VLAFlow_Technical_Report.pdf).
+### Backbones and Checkpoints
 
-### Efficient adaptation (LoRA)
+Download the backbones separately and arrange them under `MODEL_ROOT`:
 
-Injecting LoRA only into the **action expert** cannot match full fine-tuning; **VLM-side** LoRA
-approaches full FT with ~100M trainable parameters, and **both-side** LoRA is best under a larger
-budget — downstream adaptation needs low-rank capacity for the *vision-language* representation, not
-only the action head.
+```text
+models/
+  Qwen3-VL-4B-Instruct/
+  vjepa2-vitl-fpc16-256/    # Required for MindWPI and MindLWPI
+```
 
-<p align="center">
-  <img src="assets/lora_rank_scaling.png" width="62%" alt="LoRA rank scaling on LIBERO">
-</p>
+These are backbone weights, **not the VLAFlow pre-trained or fine-tuned checkpoints** tracked
+in the TODO list. Until those checkpoints are released, train your own or supply a compatible
+checkpoint together with its configuration and normalization statistics.
 
----
+## Quick Start
 
-## Key Insight: a Meta-Action Space
+Prepare datasets using [Data preparation](docs/data.md), then set resource paths:
 
-Low-dimensional action labels alone struggle to form a stable representation across heterogeneous
-embodiments, sampling rates, and action definitions. Language (high-level intent) and future latents
-(state transition) provide complementary intermediate constraints that "flatten" the fragmented raw
-action space into a smoother, more transferable **meta-action space**.
+```bash
+export DATA_ROOT=/path/to/data
+export MODEL_ROOT=/path/to/models
+export OUTPUT_ROOT=/path/to/outputs
+export GPUS_PER_NODE=8
+unset PRETRAINED_CHECKPOINT
 
-<p align="center">
-  <img src="assets/meta_action_space.png" width="82%" alt="Meta-action space interpretation">
-</p>
+# Inspect the effective configuration without loading models or starting training.
+bash examples/OXE_Mix/train_files/run_mindwpi_oxemix_pretrain.sh --dry-run
 
----
+# Pre-train MindWPI on all OXEMix sources.
+bash examples/OXE_Mix/train_files/run_mindwpi_oxemix_pretrain.sh
 
-## Report
+# Fine-tune the resulting checkpoint on LIBERO.
+export DATA_ROOT=/path/to/libero/data
+export PRETRAINED_CHECKPOINT=/path/to/run/checkpoints/steps_200000_pytorch_model.pt
+bash examples/LIBERO/train_files/run_mindwpi_libero_finetune.sh
+```
 
-The full technical report (method, appendices with KV-cache/attention-mask/latent details, complete
-result tables, and hyperparameters) is available on arXiv and included in this repository:
+The eight-GPU example is a launch example, not the paper's full compute configuration:
+pre-training defaults give global batch 64 on one such node, versus the paper reference of 512.
+Configure node count or gradient accumulation explicitly to match the intended experiment.
+For MindLWPI pre-training, also compute `oxemix_global_norm_stats.json` from the actual data
+mixture before launching. Full OXEMix recipes require all three data sources.
 
-🔗 [**arXiv:2607.01586**](https://arxiv.org/abs/2607.01586) &nbsp;·&nbsp; 📄 [**report/VLAFlow_Technical_Report.pdf**](report/VLAFlow_Technical_Report.pdf)
+See [Training](docs/training.md) for all model recipes, distributed settings, resource overrides,
+frozen-VLM/no-pretraining controls, and paper defaults.
 
----
+## Evaluation
+
+Evaluation uses a WebSocket policy server and a separate benchmark client. For a
+**LIBERO-fine-tuned** checkpoint, start the server in the VLAFlow environment:
+
+```bash
+export PRETRAINED_CHECKPOINT=/path/to/run/checkpoints/steps_100000_pytorch_model.pt
+export POLICY_PYTHON=/path/to/vlaflow/environment/bin/python
+export POLICY_PORT=10093
+bash examples/LIBERO/eval_files/run_policy_server.sh
+```
+
+In a second terminal, from the repository root, run the client using your installed LIBERO
+environment:
+
+```bash
+export PRETRAINED_CHECKPOINT=/path/to/run/checkpoints/steps_100000_pytorch_model.pt
+export SIM_PYTHON=/path/to/libero/environment/bin/python
+export LIBERO_HOME=/path/to/LIBERO
+export POLICY_HOST=127.0.0.1
+export POLICY_PORT=10093
+export OUTPUT_ROOT=/path/to/evaluation
+bash examples/LIBERO/eval_files/run_eval.sh
+```
+
+Keep run configuration and dataset statistics alongside the weights. The checkpoint must be
+accessible to the client as well as the server. See [Evaluation](docs/evaluation.md) for
+LIBERO-Plus, SimplerEnv Bridge/RT-1 protocols, simulator setup, and metric summaries;
+[Checkpoints](docs/checkpoints.md) describes checkpoint metadata and migration.
+
+## Repository Layout
+
+| Path | Contents |
+| --- | --- |
+| [`vlaflow/`](vlaflow/) | Models, data pipelines, trainers, and portable launcher |
+| [`examples/`](examples/) | Dataset registries, training recipes, and benchmark clients |
+| [`deployment/`](deployment/) | WebSocket policy server and client utilities |
+| [`scripts/`](scripts/) | Data conversion, metadata, normalization, and metric summaries |
+| [`docs/`](docs/) | Data, training, evaluation, checkpoints, and release guidance |
+| [`index.html`](index.html), [`assets/`](assets/), [`report/`](report/) | Existing project website, figures, and technical report |
+
+## Acknowledgments
+
+We thank [starVLA](https://github.com/starVLA/starVLA),
+[LDA-1B](https://github.com/jiangranlv/LDA-1B), and
+[Abot-M0](https://github.com/amap-cvlab/ABot-Manipulation) for their open-source contributions.
+
+VLAFlow builds on StarVLA and includes code attributed to NVIDIA, OpenVLA, SimplerEnv,
+robosuite, and msgpack-numpy. We also thank the Qwen, V-JEPA 2, LeRobot, dataset, and benchmark
+communities. See [Third-party notices](THIRD_PARTY_NOTICES.md) for component-level attribution.
 
 ## Citation
-
-If you find VLAFlow useful, please cite:
 
 ```bibtex
 @article{xia2026vlaflow,
@@ -226,15 +252,21 @@ If you find VLAFlow useful, please cite:
 }
 ```
 
----
+Machine-readable citation metadata is available in [`CITATION.cff`](CITATION.cff).
 
 ## License
 
-Released under the **[Apache License 2.0](LICENSE)** — Copyright 2026 Li Auto Inc.
-See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE) for details.
+VLAFlow contributions are copyright Li Auto. See [`LICENSE`](LICENSE) for the current code
+license text, including the retained StarVLA attribution and additional upstream wording.
+Third-party components retain their respective terms in source headers and [`LICENSES/`](LICENSES/).
+The existing project website and figures retain their
+[Apache-2.0 license](LICENSES/Project-materials-Apache-2.0.txt) and
+[original notice](LICENSES/Project-materials-NOTICE.txt).
+The updated technical report is included as supplied by the authors, without modification;
+its embedded arXiv license metadata is preserved. This repository does not assign a new
+license to that PDF. See [Third-party notices](THIRD_PARTY_NOTICES.md) for details.
 
----
-
-<div align="center">
-<sub>VLAFlow · Li Auto Inc. · Beijing University of Posts and Telecommunications · CUHK-Shenzhen</sub>
-</div>
+**Release-candidate note:** the code license and the previously published project's Apache-2.0
+license are not yet unified. Maintainers should resolve the licensing checklist in
+[Release preparation](docs/releasing.md) before publishing this candidate. No license to
+separately downloaded model weights or datasets is granted by this repository.

@@ -1,14 +1,19 @@
 VLAFlow
 Copyright 2026 Li Auto Inc.
 
-This product includes software and materials developed at Li Auto Inc.
+Li Auto claims copyright only in its contributions. Original upstream
+copyright and license notices remain applicable to third-party components.
+See LICENSE, THIRD_PARTY_NOTICES.md, and LICENSES/ for the relevant terms.
 
-VLAFlow: A Unified Training Framework for Vision-Language-Action Models
-via Co-training and Future Latent Alignment.
-Paper (arXiv): https://arxiv.org/abs/2607.01586
-Project page:  https://mindvla-team.github.io/VLAFlow/
-Code:          https://github.com/MindVLA-Team/VLAFlow
+The existing project website (index.html) and figures (assets/) retain
+their Apache License 2.0 terms. Their original
+license and NOTICE are preserved without changes in
+LICENSES/Project-materials-Apache-2.0.txt and
+LICENSES/Project-materials-NOTICE.txt. This attribution does not relicense
+third-party code or resolve the pending code-license review.
 
-Licensed under the Apache License, Version 2.0 (the "License").
-You may obtain a copy of the License at:
-    http://www.apache.org/licenses/LICENSE-2.0
+The technical report was replaced with the author-supplied
+arXiv:2607.01586v2 PDF (August 4, 2026), without modifying its contents
+or embedded license metadata. The archived project-materials notices
+describe the original materials; they do not assign a new license to
+the replacement PDF. See THIRD_PARTY_NOTICES.md for its metadata.

@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vlaflow"
+version = "0.1.0"
+description = "Vision-language-action training with co-training and future latent alignment"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{name = "Li Auto."}]
+license = {file = "LICENSE"}
+keywords = ["vision-language-action", "robot-learning", "flow-matching"]
+dynamic = ["dependencies"]
+
+[project.optional-dependencies]
+dev = ["black>=24.2.0", "ruff>=0.2.2", "build"]
+eval = ["tyro", "transforms3d", "websocket-client==1.8.0"]
+video = ["decord==0.6.0"]
+
+[tool.setuptools]
+license-files = ["LICENSE", "NOTICE", "THIRD_PARTY_NOTICES.md", "LICENSES/*"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["vlaflow*", "deployment*", "examples*"]
+exclude = ["*.bar*", "*.__pycache__*"]
+
+[tool.setuptools.package-data]
+vlaflow = ["config/*.yaml"]
+examples = ["**/*.yaml", "**/*.json", "**/*.sh", "**/README.md"]
+
+[tool.black]
+line-length = 121
+target-version = ["py310"]
+preview = true
+
+[tool.ruff]
+line-length = 121
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["A", "B", "E", "F", "I", "RUF", "W"]
+ignore = ["F722"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402", "F401"]
