@@ -39,9 +39,6 @@ This controlled setup isolates the effect of the **training supervision signal**
 - [ ] Release pre-trained weights and downstream fine-tuned weights.
 - [ ] Provide an SO-ARM real-world experiment demo.
 
-The training implementation and recipes are included in this release candidate; the first item
-tracks their public release. Model weights, datasets, and the SO-ARM demo are not bundled.
-
 ## Highlights
 
 - **Controlled comparisons:** the same backbone and action expert support different supervision
