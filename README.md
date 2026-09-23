@@ -36,8 +36,26 @@ This controlled setup isolates the effect of the **training supervision signal**
 ## TODO
 
 - [x] Release training code.
-- [ ] Release pre-trained weights and downstream fine-tuned weights.
+- [ ] Release all model weights: [pre-trained weights available](#pre-trained-models); downstream fine-tuned weights coming soon.
 - [ ] Provide an SO-ARM real-world experiment demo.
+
+## Pre-trained Models
+
+The three **OXEMix-pre-trained base models** are now available on Hugging Face.
+These are pre-training checkpoints for downstream fine-tuning, not benchmark-specific
+fine-tuned policies. Downstream fine-tuned weights have not yet been released.
+
+| Model | Implementation | Released checkpoint | Hugging Face |
+| --- | --- | --- | --- |
+| **MindPI** | `MindPI` | `checkpoints/steps_200000_pytorch_model.pt` | [MindPI_OXEMix_BaseModel](https://huggingface.co/EmberNoWeither/MindPI_OXEMix_BaseModel) |
+| **MindWPI** | `MindWPI` | `checkpoints/steps_200000_pytorch_model.pt` | [MindWPI_OXEMix_BaseModel](https://huggingface.co/EmberNoWeither/MindWPI_OXEMix_BaseModel) |
+| **MindLWPI** | `MindLWPI_Compressed` (AvgPool-k4) | `checkpoints/steps_100000_pytorch_model.pt` | [MindLWPI_OXEMix_BaseModel](https://huggingface.co/EmberNoWeither/MindLWPI_OXEMix_BaseModel) |
+
+Each model repository also includes `config.full.yaml`, `config.yaml`, and
+`dataset_statistics.json`. Keep these files together with the `checkpoints/` directory.
+Use the matching framework and see [Checkpoint migration](docs/checkpoints.md) for
+configuration compatibility and local path updates. Download instructions are provided
+[below](#download-a-pre-trained-model).
 
 ## Highlights
 
@@ -149,9 +167,22 @@ models/
   vjepa2-vitl-fpc16-256/    # Required for MindWPI and MindLWPI
 ```
 
-These are backbone weights, **not the VLAFlow pre-trained or fine-tuned checkpoints** tracked
-in the TODO list. Until those checkpoints are released, train your own or supply a compatible
-checkpoint together with its configuration and normalization statistics.
+These are backbone weights, **not the VLAFlow OXEMix-pre-trained checkpoints** listed
+[above](#pre-trained-models). The released VLAFlow checkpoints do not replace these backbone
+directories; configure `MODEL_ROOT` for your local backbone files.
+
+### Download a Pre-trained Model
+
+After [installation](#installation), use the Hugging Face CLI to download a complete model
+repository, preserving its configuration, statistics, and checkpoint layout. For MindWPI:
+
+```bash
+hf download EmberNoWeither/MindWPI_OXEMix_BaseModel \
+  --local-dir models/MindWPI_OXEMix_BaseModel
+
+# Use this weight file with the matching MindWPI fine-tuning recipe.
+export PRETRAINED_CHECKPOINT="$PWD/models/MindWPI_OXEMix_BaseModel/checkpoints/steps_200000_pytorch_model.pt"
+```
 
 ## Quick Start
 
