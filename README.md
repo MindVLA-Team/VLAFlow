@@ -36,14 +36,14 @@ This controlled setup isolates the effect of the **training supervision signal**
 ## TODO
 
 - [x] Release training code.
-- [ ] Release all model weights: [pre-trained weights available](#pre-trained-models); downstream fine-tuned weights coming soon.
+- [x] Release [pre-trained weights](#pre-trained-models) and downstream fine-tuned weights for [LIBERO](#libero-fine-tuned-models) and [SimplerEnv](#simplerenv-fine-tuned-models).
 - [ ] Provide an SO-ARM real-world experiment demo.
 
 ## Pre-trained Models
 
 The three **OXEMix-pre-trained base models** are now available on Hugging Face.
 These are pre-training checkpoints for downstream fine-tuning, not benchmark-specific
-fine-tuned policies. Downstream fine-tuned weights have not yet been released.
+fine-tuned policies. For benchmark evaluation, use the downstream fine-tuned models below.
 
 | Model | Implementation | Released checkpoint | Hugging Face |
 | --- | --- | --- | --- |
@@ -56,6 +56,42 @@ Each model repository also includes `config.full.yaml`, `config.yaml`, and
 Use the matching framework and see [Checkpoint migration](docs/checkpoints.md) for
 configuration compatibility and local path updates. Download instructions are provided
 [below](#download-a-pre-trained-model).
+
+## LIBERO Fine-tuned Models
+
+The three **OXEMix-pre-trained, LIBERO-fine-tuned policies** are now available on Hugging Face.
+These checkpoints can also be evaluated on LIBERO-Plus without additional fine-tuning.
+
+| Model | Implementation | Released checkpoint | Hugging Face |
+| --- | --- | --- | --- |
+| **MindPI** | `MindPI` | `checkpoints/steps_100000_pytorch_model.pt` | [MindPI_OXEMix_LIBERO_Finetuned](https://huggingface.co/EmberNoWeither/MindPI_OXEMix_LIBERO_Finetuned) |
+| **MindWPI** | `MindWPI` | `checkpoints/steps_100000_pytorch_model.pt` | [MindWPI_LIBERO_Finetuned](https://huggingface.co/EmberNoWeither/MindWPI_LIBERO_Finetuned) |
+| **MindLWPI** | `MindLWPI_Compressed` (AvgPool-k4) | `checkpoints/steps_100000_pytorch_model.pt` | [MindLWPI_LIBERO_Finetuned](https://huggingface.co/EmberNoWeither/MindLWPI_LIBERO_Finetuned) |
+
+Download the complete repository, including its configuration and dataset statistics.
+See [Download a fine-tuned model](#download-a-fine-tuned-model) and
+[Evaluation](#evaluation) for download and policy-server examples.
+
+## SimplerEnv Fine-tuned Models
+
+The six **OXEMix-pre-trained policies fine-tuned on RT-1 or Bridge** are now available on
+Hugging Face. Use the RT-1 checkpoints for RT-1 evaluation and the Bridge-fine-tuned
+checkpoints for WidowX evaluation; their configurations and normalization statistics are
+embodiment-specific.
+
+| Model | Evaluation embodiment | Fine-tuning data | Released checkpoint | Hugging Face |
+| --- | --- | --- | --- | --- |
+| **MindPI** | RT-1 | RT-1 | `checkpoints/steps_50000_pytorch_model.pt` | [MindPI_OXEMix_SimplerEnv_RT1](https://huggingface.co/EmberNoWeither/MindPI_OXEMix_SimplerEnv_RT1) |
+| **MindWPI** | RT-1 | RT-1 | `checkpoints/steps_50000_pytorch_model.pt` | [MindWPI_OXEMix_SimplerEnv_RT1](https://huggingface.co/EmberNoWeither/MindWPI_OXEMix_SimplerEnv_RT1) |
+| **MindLWPI** | RT-1 | RT-1 | `checkpoints/steps_50000_pytorch_model.pt` | [MindLWPI_OXEMix_SimplerEnv_RT1](https://huggingface.co/EmberNoWeither/MindLWPI_OXEMix_SimplerEnv_RT1) |
+| **MindPI** | WidowX | Bridge | `checkpoints/steps_50000_pytorch_model.pt` | [MindPI_OXEMix_SimplerEnv_WidowX](https://huggingface.co/EmberNoWeither/MindPI_OXEMix_SimplerEnv_WidowX) |
+| **MindWPI** | WidowX | Bridge | `checkpoints/steps_60000_pytorch_model.pt` | [MindWPI_OXEMix_SimplerEnv_WidowX](https://huggingface.co/EmberNoWeither/MindWPI_OXEMix_SimplerEnv_WidowX) |
+| **MindLWPI** | WidowX | Bridge | `checkpoints/steps_60000_pytorch_model.pt` | [MindLWPI_OXEMix_SimplerEnv_WidowX](https://huggingface.co/EmberNoWeither/MindLWPI_OXEMix_SimplerEnv_WidowX) |
+
+The implementations are `MindPI`, `MindWPI`, and `MindLWPI_Compressed` (AvgPool-k4), respectively.
+Keep each checkpoint with its own `config.full.yaml`, `config.yaml`, and
+`dataset_statistics.json`. See [Download a fine-tuned model](#download-a-fine-tuned-model)
+and the [SimplerEnv evaluation protocols](docs/evaluation.md).
 
 ## Highlights
 
@@ -183,6 +219,29 @@ hf download EmberNoWeither/MindWPI_OXEMix_BaseModel \
 # Use this weight file with the matching MindWPI fine-tuning recipe.
 export PRETRAINED_CHECKPOINT="$PWD/models/MindWPI_OXEMix_BaseModel/checkpoints/steps_200000_pytorch_model.pt"
 ```
+
+### Download a Fine-tuned Model
+
+Download the complete repository for the target benchmark. For example:
+
+```bash
+# LIBERO / LIBERO-Plus: MindLWPI, 100000 steps.
+hf download EmberNoWeither/MindLWPI_LIBERO_Finetuned \
+  --local-dir models/MindLWPI_LIBERO_Finetuned
+export PRETRAINED_CHECKPOINT="$PWD/models/MindLWPI_LIBERO_Finetuned/checkpoints/steps_100000_pytorch_model.pt"
+```
+
+```bash
+# SimplerEnv WidowX (Bridge fine-tuning): MindLWPI, 60000 steps.
+hf download EmberNoWeither/MindLWPI_OXEMix_SimplerEnv_WidowX \
+  --local-dir models/MindLWPI_OXEMix_SimplerEnv_WidowX
+export PRETRAINED_CHECKPOINT="$PWD/models/MindLWPI_OXEMix_SimplerEnv_WidowX/checkpoints/steps_60000_pytorch_model.pt"
+```
+
+For another model or RT-1 evaluation, substitute the repository and checkpoint filename
+from the corresponding table. Keep the downloaded directory layout intact and configure
+local backbone paths as described in [Checkpoint migration](docs/checkpoints.md).
+Then follow the matching benchmark setup in [Evaluation](docs/evaluation.md).
 
 ## Quick Start
 
